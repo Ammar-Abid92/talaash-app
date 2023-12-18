@@ -11,6 +11,7 @@ import CustomTabBar from "../components/common/CustomTabBar";
 import CustomHeader from "../components/common/TabBarHeader";
 import SignUpForm from "../components/container/SignUp";
 import SignInForm from "../components/container/SignIn";
+import Account from "../components/container/Account";
 
 const Stack = createNativeStackNavigator();
 const Tab = createMaterialTopTabNavigator();
@@ -63,7 +64,7 @@ function MainRoutes() {
     }}>
       <Stack.Screen name="home" component={MyTabsWithHeader} />
       <Stack.Screen name="authRoutes" component={AuthRoutes} />
-      <Stack.Screen name="profileDetails" component={""} />
+      <Stack.Screen name="account" component={Account} />
     </Stack.Navigator>
   )
 }

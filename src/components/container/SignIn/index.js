@@ -4,10 +4,13 @@ import { TextInput, Button } from 'react-native-paper';
 import CustomButton from '../../common/Button';
 import { LanguageContext } from '../../../context/LanguageContext';
 import { ThemeContext } from '../../../context/ThemeContext';
-import { EMAIL_REGEX, PHONE_REGEX } from '../../../constants/utils';
+import { EMAIL_REGEX } from '../../../constants/utils';
 import { useEffect } from 'react';
 import { Avatar } from '../../common/Avatar';
 import { useNavigation } from '@react-navigation/native';
+import { signInService } from '../../../services/firebase';
+import CustomToast from '../../common/Toast';
+import {AsyncStorage} from 'react-native';
 
 
 const { height, width, fontScale } = Dimensions.get('window');
@@ -19,59 +22,78 @@ const SignInForm = () => {
     const [I18n, changeLanguage] = useContext(LanguageContext)
     const [theme, setTheme] = useContext(ThemeContext)
 
-    const [phone, setPhone] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+
+    const [isVisible, setIsVisible] = useState(false)
+    const [toastTitle, setToastTitle] = useState('')
+    const [toastType, setToastType] = useState('')
+
     const [errors, setErrors] = useState({
         email: '',
-        phone: '',
         password: ''
     })
 
     useEffect(() => {
-        if (phone.length && !PHONE_REGEX.test(phone)) {
+        if (email.length && !EMAIL_REGEX.test(email)) {
 
             setErrors({
                 ...errors,
-                phone: "Phone number is wrong"
+                email: "email address is formatted wrong"
             })
         } else {
             setErrors({
                 ...errors,
-                phone: ""
+                email: ""
             })
         }
     }, [password])
 
 
     const handleSignIn = () => {
-        console.log('Sign In pressed');
+        console.log('Sign In pressed', Object.values(errors), errors);
 
+        if (!errors.email && !errors.password ) {
+
+            signInService(email, password)
+                .then(res => {
+                    console.log(res)
+                    AsyncStorage.setItem('userId', res.user.uid);
+                    setIsVisible(true)
+                    setToastTitle("Sign in successful")
+                    setToastType('success')
+                })
+                .catch(e => {
+                    setIsVisible(true)
+                    console.log(e)
+                    setToastTitle(e)
+                    setToastType('fail')
+                })
+        }
     };
 
 
     return (
         <View style={styles.mainContainer} >
-            <Text style={styles.header}>You need to login to report the missing person</Text>
+            <Text style={{ ...styles.header, color: theme.dark }}>You need to login to report the missing person</Text>
 
             <ScrollView style={styles.container} >
 
                 <TextInput
-                    label={errors?.phone ? errors.phone : "Phone number"}
-                    value={phone}
+                    label={errors?.email ? errors.email : "Email address"}
+                    value={email}
                     onChangeText={(text) => {
                         setErrors({
                             ...errors,
-                            phone: ''
+                            email: ''
                         })
-                        setPhone(text)
+                        setEmail(text)
                     }}
                     mode="outlined"
-                    keyboardType="number-pad"
+                    keyboardType="email-address"
                     style={styles.input}
                     activeOutlineColor={theme.backgroundColor}
-                    placeholder="03xxxxxxxxx or +923xxxxxxxxx"
-                    maxLength={13}
-                    error={errors.phone}
+                    error={errors.email}
 
                 />
 
@@ -80,7 +102,6 @@ const SignInForm = () => {
                     value={password}
 
                     onChangeText={(text) => {
-
                         setPassword(text)
                     }}
                     mode="outlined"
@@ -92,7 +113,7 @@ const SignInForm = () => {
                 />
 
                 <Text
-                    style={styles.signUpText}
+                    style={{ ...styles.signUpText, color: theme.dark }}
                     onPress={() => { navigation.navigate("authRoutes") }}
                 >
                     New user ? Sign up please
@@ -108,8 +129,18 @@ const SignInForm = () => {
                     txtColor="#ffffff"
                     style={styles.buttonStyle}
                     onPress={handleSignIn}
+                    disabled={!errors.email && !errors.password ? false : true}
                 />
             </View>
+
+            {isVisible && (
+                <CustomToast
+                    isVisible={isVisible}
+                    onDismiss={() => setIsVisible(false)}
+                    title={toastTitle}
+                    type={toastType}
+                />
+            )}
         </View>
     );
 };

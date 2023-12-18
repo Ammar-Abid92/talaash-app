@@ -7,6 +7,9 @@ import { ThemeContext } from '../../../context/ThemeContext';
 import { EMAIL_REGEX, PHONE_REGEX } from '../../../constants/utils';
 import { useEffect } from 'react';
 import { Avatar } from '../../common/Avatar';
+import { signUpService } from "../../../services/firebase"
+import CustomToast from '../../common/Toast';
+import {AsyncStorage} from 'react-native';
 
 const { height, width, fontScale } = Dimensions.get('window');
 
@@ -30,6 +33,10 @@ const SignUpForm = ({ navigation }) => {
         phone: '',
         password: ''
     })
+
+    const [isVisible, setIsVisible] = useState(false)
+    const [toastTitle, setToastTitle] = useState('')
+    const [toastType, setToastType] = useState('')
 
     useEffect(() => {
         if (password != confirmPassword) {
@@ -65,7 +72,26 @@ const SignUpForm = ({ navigation }) => {
             })
         }
 
-        navigation.navigate("found")
+        if (!errors.email && !errors.password && !errors.phone) {
+
+            signUpService(email, password).then(res => {
+                console.log(res)
+                AsyncStorage.setItem('userId', res.user.uid);
+                setIsVisible(true)
+                setToastTitle("Sign up successful")
+                setToastType('success')
+                navigation.navigate("found")
+            }).catch(e => {
+                setIsVisible(true)
+                console.log(e)
+                setToastTitle(e)
+                setToastType('fail')
+            })
+        } else {
+            setIsVisible(true)
+            setToastTitle("Fill the form correctly")
+            setToastType('fail')
+        }
 
     };
 
@@ -203,8 +229,20 @@ const SignUpForm = ({ navigation }) => {
                     txtColor="#ffffff"
                     style={styles.buttonStyle}
                     onPress={handleSignUp}
+                    disabled={!errors.email && !errors.password && !errors.phone ? false : true}
+
                 />
             </View>
+
+            {isVisible && (
+                <CustomToast
+                    isVisible={isVisible}
+                    onDismiss={() => setIsVisible(false)}
+                    title={toastTitle}
+                    type={toastType}
+
+                />
+            )}
         </View>
     );
 };
@@ -219,7 +257,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
         fontSize: 20,
         fontWeight: 'bold',
-        width:300
+        width: 300
     },
     container: {
         flex: 0.75,

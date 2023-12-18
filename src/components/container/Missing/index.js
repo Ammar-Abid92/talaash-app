@@ -1,14 +1,20 @@
-import React, { useContext } from 'react'
+import React, { useContext, useEffect } from 'react'
 import { View, Text, FlatList, Image, StyleSheet, SafeAreaView, Dimensions } from 'react-native';
 import List from './List';
 import CustomButton from '../../common/Button';
 import { LanguageContext } from '../../../context/LanguageContext';
 import { ThemeContext } from '../../../context/ThemeContext';
+import { getToken, requestUserPermission } from '../../../services/firebase';
 
 const { height, width, fontScale } = Dimensions.get('window');
 
 
 const MissingPeople = ({ navigation }) => {
+
+    useEffect(()=>{
+        requestUserPermission();
+        getToken();
+    }, [])
 
 
     const [I18n, changeLanguage] = useContext(LanguageContext)

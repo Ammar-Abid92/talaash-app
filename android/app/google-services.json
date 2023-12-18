@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "726930230003",
-    "project_id": "talaash-app",
-    "storage_bucket": "talaash-app.appspot.com"
+    "project_number": "989998313672",
+    "project_id": "talaash-app-a1e4f",
+    "storage_bucket": "talaash-app-a1e4f.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:726930230003:android:17429ab641321f19660586",
+        "mobilesdk_app_id": "1:989998313672:android:6deb1f39d9b18f0586b5fd",
         "android_client_info": {
           "package_name": "com.mycomponentsapp"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyB_UW9ptIMF8XOrC4-G6ojeIzCG5OJZsug"
+          "current_key": "AIzaSyAc7iUbdhJHcYsvFJd4qtfzNRau4DVXAIA"
         }
       ],
       "services": {

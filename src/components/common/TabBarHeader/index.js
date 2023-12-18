@@ -2,15 +2,17 @@ import React from 'react'
 import { Text, View } from 'react-native'
 import Icon from 'react-native-vector-icons/dist/FontAwesome';
 import { useNavigation } from '@react-navigation/native';
+import {AsyncStorage} from 'react-native';
 
 const CustomHeader = ({ route }) => {
     const navigation = useNavigation();
 
+    const handleIconPress = async () => {
 
-
-    const handleIconPress = () => {
-
-        navigation.navigate('authRoutes');
+        const userId = await AsyncStorage.getItem('userId');
+        if (userId){
+            navigation.navigate('account');
+        }
 
     }
 
