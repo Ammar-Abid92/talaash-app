@@ -145,6 +145,8 @@ android {
         versionCode 1
         versionName "1.0"
         buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()
+        multiDexEnabled true // <-- ADD THIS in the defaultConfig section
+
 
         if (isNewArchitectureEnabled()) {
             // We configure the CMake build only if you decide to opt-in for the New Architecture.
@@ -254,6 +256,9 @@ android {
 
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
+
+    implementation 'com.android.support:multidex:2.0.1' //enter the latest multidex version
+
 
     //noinspection GradleDynamicVersion
     implementation "com.facebook.react:react-native:+"  // From node_modules  
