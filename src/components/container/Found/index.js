@@ -2,23 +2,31 @@ import React, { useEffect, useState } from 'react'
 import { View, Text, SafeAreaView, StyleSheet } from 'react-native'
 import MissingPersonReportForm from './ReportForm'
 import SignInForm from '../SignIn'
-import {AsyncStorage} from 'react-native';
+import { useSelector } from 'react-redux';
+import { getUserFromAsyncStorage } from '../../../services/helper';
 
 
 const FoundPerson = ({ route, navigation }) => {
-    const [isUserLoggedIn, setIsUserLoggedIn] = useState(false)
+    
+    const user = useSelector(state=>state.user.user)
+    const [userData, setUserData] = useState(null);
+
+    console.log("USER in redux----->", user)
 
     useEffect(() => {
-        checkUserAvailability()
-    })
-
-    const checkUserAvailability = async () => {
-        const userId = await AsyncStorage.getItem('userId');
-        setIsUserLoggedIn(userId ? true : false)
-    }
+        checkUserFromStorage();
+      }, []);
 
 
-    return isUserLoggedIn ? (
+      const checkUserFromStorage = async () => {
+        const storedUser = await getUserFromAsyncStorage();
+        console.log("User in ASYNC---->", storedUser)
+        if (storedUser) {
+            setUserData(storedUser);
+        }
+      };
+
+    return userData?.uid ? (
         <View style={styles.mainContainer} >
             <MissingPersonReportForm />
         </View>

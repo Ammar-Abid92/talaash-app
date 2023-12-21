@@ -9,13 +9,16 @@ import { useEffect } from 'react';
 import { Avatar } from '../../common/Avatar';
 import { signUpService } from "../../../services/firebase"
 import CustomToast from '../../common/Toast';
-import {AsyncStorage} from 'react-native';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../../../redux/slice/userSlice';
+import { saveUserToAsyncStorage } from '../../../services/helper';
 
 const { height, width, fontScale } = Dimensions.get('window');
 
 
 const SignUpForm = ({ navigation }) => {
 
+    const dispatch = useDispatch()
     const [I18n, changeLanguage] = useContext(LanguageContext)
     const [theme, setTheme] = useContext(ThemeContext)
 
@@ -76,7 +79,8 @@ const SignUpForm = ({ navigation }) => {
 
             signUpService(email, password).then(res => {
                 console.log(res)
-                AsyncStorage.setItem('userId', res.user.uid);
+                saveUserToAsyncStorage(res.user)
+                dispatch(setUser(res.user))
                 setIsVisible(true)
                 setToastTitle("Sign up successful")
                 setToastType('success')

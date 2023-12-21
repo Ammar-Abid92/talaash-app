@@ -10,7 +10,9 @@ import { Avatar } from '../../common/Avatar';
 import { useNavigation } from '@react-navigation/native';
 import { signInService } from '../../../services/firebase';
 import CustomToast from '../../common/Toast';
-import {AsyncStorage} from 'react-native';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../../../redux/slice/userSlice';
+import { saveUserToAsyncStorage } from '../../../services/helper';
 
 
 const { height, width, fontScale } = Dimensions.get('window');
@@ -18,6 +20,7 @@ const { height, width, fontScale } = Dimensions.get('window');
 
 const SignInForm = () => {
     const navigation = useNavigation();
+    const dispatch = useDispatch();
 
     const [I18n, changeLanguage] = useContext(LanguageContext)
     const [theme, setTheme] = useContext(ThemeContext)
@@ -58,7 +61,9 @@ const SignInForm = () => {
             signInService(email, password)
                 .then(res => {
                     console.log(res)
-                    AsyncStorage.setItem('userId', res.user.uid);
+                    const { displayName, email, emailVerified, phoneNumber, photoURL, uid } = res.user;
+                    saveUserToAsyncStorage(res.user)
+                    dispatch(setUser({ displayName, email, emailVerified, phoneNumber, photoURL, uid }))
                     setIsVisible(true)
                     setToastTitle("Sign in successful")
                     setToastType('success')
@@ -136,7 +141,7 @@ const SignInForm = () => {
             {isVisible && (
                 <CustomToast
                     isVisible={isVisible}
-                    onDismiss={() => setIsVisible(false)}
+                    onDismiss={() => {}}
                     title={toastTitle}
                     type={toastType}
                 />

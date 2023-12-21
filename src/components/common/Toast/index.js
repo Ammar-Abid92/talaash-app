@@ -11,7 +11,6 @@ const CustomToast = ({isVisible, onDismiss, action, actionLabel, title, type}) =
                 style={{backgroundColor: type == 'success' ? 'green' : type === 'warning' ? 'yellow' : type === 'fail' ? 'red' : 'black'}}
                 visible={isVisible}
                 onDismiss={onDismiss ? onDismiss : null}
-                duration={3000} 
                 action={action && actionLabel ? {
                     label: actionLabel,
                     onPress: action,

@@ -5,3 +5,13 @@ export const ALPHABET_REGIX = /^[a-zA-Z]+$/;
 
 export const EMAIL_REGEX =
   /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+
+
+export const dateAndTimeFormatter = (seconds, nanoseconds) => {
+  const date = new Date(seconds * 1000 + nanoseconds / 1000000);
+  const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+  const formattedDate = date.toLocaleDateString('en-GB', options);
+  const formattedTime = date.toLocaleTimeString();
+
+  return {formattedDate, formattedTime}
+}

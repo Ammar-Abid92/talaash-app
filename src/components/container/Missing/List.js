@@ -1,14 +1,17 @@
 import React, { useContext } from 'react'
 import { Image, StyleSheet, Text, View } from 'react-native'
+import { dateAndTimeFormatter } from '../../../constants/utils';
 
 const List = ({ item }) => {
-    
+
+    console.log("ITEM---->", item)
+
     return (
         <View style={styles.userContainer}>
-            <Image source={item.profileImage} style={styles.profileImage} />
+            <Image source={{uri: item.image}} style={styles.profileImage} />
             <View style={styles.userInfo}>
                 <Text style={styles.userName}>{item.name}</Text>
-                <Text style={styles.joinDate}>{item.joinDate}</Text>
+                <Text style={styles.joinDate}>Missed on {item.missing_date}</Text>
             </View>
         </View>
     )
@@ -21,8 +24,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 4,
-        backgroundColor: '#EDF9FE',
-        margin:2,
+        marginTop:8,
 
     },
     profileImage: {

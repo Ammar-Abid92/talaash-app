@@ -1,108 +1,60 @@
-import React, { useContext, useEffect } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { View, Text, FlatList, Image, StyleSheet, SafeAreaView, Dimensions } from 'react-native';
 import List from './List';
 import CustomButton from '../../common/Button';
 import { LanguageContext } from '../../../context/LanguageContext';
 import { ThemeContext } from '../../../context/ThemeContext';
-import { getToken, requestUserPermission } from '../../../services/firebase';
+import { getCollectionData, getToken, requestUserPermission } from '../../../services/firebase';
+import { collectionNames } from '../../../services/firebase/collectionsMap';
+import { ActivityIndicator } from 'react-native';
+import useGetCollectionData from '../../../hooks/useGetCollectionData';
 
 const { height, width, fontScale } = Dimensions.get('window');
 
 
 const MissingPeople = ({ navigation }) => {
 
-    useEffect(()=>{
+    const [I18n, changeLanguage] = useContext(LanguageContext)
+    
+    const [theme, setTheme] = useContext(ThemeContext)
+    const [loading, setLoading] = useState(true);
+    
+    const { data } = useGetCollectionData(collectionNames.missing, setLoading)
+    
+    useEffect(() => {
         requestUserPermission();
         getToken();
     }, [])
-
-
-    const [I18n, changeLanguage] = useContext(LanguageContext)
-    const [theme, setTheme] = useContext(ThemeContext)
-
-    const userData = [
-        {
-            id: '1',
-            name: 'John Doe',
-            joinDate: 'Missed on Jan 1, 2021',
-            profileImage: require('../../../assets/images/person.jpeg'),
-        },
-        {
-            id: '2',
-            name: 'Jane Smith',
-            joinDate: 'Missed on Feb 15, 2022',
-            profileImage: require('../../../assets/images/person.jpeg'),
-        },
-        {
-            id: '3',
-            name: 'Jane Smith',
-            joinDate: 'Missed on Feb 15, 2022',
-            profileImage: require('../../../assets/images/person.jpeg'),
-        },
-        {
-            id: '4',
-            name: 'Jane Smith',
-            joinDate: 'Missed on Feb 15, 2022',
-            profileImage: require('../../../assets/images/person.jpeg'),
-        }, {
-            id: '5',
-            name: 'Jane Smith',
-            joinDate: 'Missed on Feb 15, 2022',
-            profileImage: require('../../../assets/images/person.jpeg'),
-        }, {
-            id: '6',
-            name: 'Jane Smith',
-            joinDate: 'Missed on Feb 15, 2022',
-            profileImage: require('../../../assets/images/person.jpeg'),
-        }, {
-            id: '7',
-            name: 'Jane Smith',
-            joinDate: 'Missed on Feb 15, 2022',
-            profileImage: require('../../../assets/images/person.jpeg'),
-        }, {
-            id: '8',
-            name: 'Jane Smith',
-            joinDate: 'Missed on Feb 15, 2022',
-            profileImage: require('../../../assets/images/person.jpeg'),
-        }, {
-            id: '9',
-            name: 'Jane Smith',
-            joinDate: 'Missed on Feb 15, 2022',
-            profileImage: require('../../../assets/images/person.jpeg'),
-        }, {
-            id: '10',
-            name: 'Jane Smith',
-            joinDate: 'Missed on Feb 15, 2022',
-            profileImage: require('../../../assets/images/person.jpeg'),
-        }, {
-            id: '11',
-            name: 'Jane Smith',
-            joinDate: 'Missed on Feb 15, 2022',
-            profileImage: require('../../../assets/images/person.jpeg'),
-        },
-    ];
 
     return (
         <SafeAreaView style={styles.mainContainer} >
 
             <View style={styles.heading} >
-                <Text style={styles.headingContent}  >
+                <Text style={{ ...styles.headingContent, color: theme.dark }} >
                     All missing people
                 </Text>
             </View>
 
-            <FlatList
-                data={userData}
-                renderItem={List}
-                keyExtractor={(item) => item.id}
-                style={styles.flatList}
-            />
+
+
+            {!loading ? (
+
+                <FlatList
+                    data={data}
+                    renderItem={List}
+                    keyExtractor={(item) => item.id}
+                    style={styles.flatList}
+                />
+            ) : (
+                <ActivityIndicator />
+            )}
+
 
             <View style={styles.buttonContainer} >
                 <CustomButton type="contained" title="Want to add a missing person ? " btnColor={theme.backgroundColor} txtColor="#ffffff"
-                    style={styles.buttonStyle} 
-                    onPress={()=>navigation.navigate('found')}
-                    />
+                    style={styles.buttonStyle}
+                    onPress={() => navigation.navigate('found')}
+                />
             </View>
         </SafeAreaView>
     )

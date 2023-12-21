@@ -6,6 +6,8 @@ import Routes from './src/routes';
 import { NativeBaseProvider } from 'native-base';
 import { LanguageProvider } from './src/context/LanguageContext';
 import { ThemeProvider } from './src/context/ThemeContext';
+import { Provider } from 'react-redux'
+import { store } from './src/redux/store';
 
 const App = () => {
 
@@ -14,12 +16,16 @@ const App = () => {
   }, [])
 
   return (
+
+    <Provider store={store}>
     <ThemeProvider>
       <LanguageProvider>
         {/* below is the props that is being passed to the language provider */}
         <Routes />
       </LanguageProvider>
     </ThemeProvider>
+    </Provider>
+
   )
 }
 

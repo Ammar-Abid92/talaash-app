@@ -1,13 +1,18 @@
 import { theme } from 'native-base';
-import React, { useContext, useState } from 'react';
-import { View, ScrollView, Text, Button, StyleSheet, Dimensions } from 'react-native';
-import { TextInput } from 'react-native-paper';
-import { RadioButton } from 'react-native-paper';
+import React, { useContext, useEffect, useState } from 'react';
+import { View, ScrollView, Text, Button, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { ThemeContext } from '../../../context/ThemeContext';
 import { LanguageContext } from '../../../context/LanguageContext';
 import CustomButton from '../../common/Button';
 import * as ImagePicker from 'react-native-image-picker';
 import { Avatar } from '../../common/Avatar';
+import { collectionNames } from '../../../services/firebase/collectionsMap';
+import { getUserFromAsyncStorage } from '../../../services/helper';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { TextInput, HelperText, Portal, RadioButton } from 'react-native-paper';
+import Modal from "react-native-modal";
+import { addDataToCollection } from '../../../services/firebase';
+
 
 const { height, width, fontScale } = Dimensions.get('window');
 
@@ -22,16 +27,65 @@ const MissingPersonReportForm = () => {
     const [lastSeenLocation, setLastSeenLocation] = useState('');
     const [description, setDescription] = useState('');
     const [selectedImage, setSelectedImage] = useState(null);
+    const [date, setDate] = useState(new Date());
+    const [time, setTime] = useState(new Date());
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showTimePicker, setShowTimePicker] = useState(false)
+    const [userData, setUserData] = useState({})
 
+    useEffect(()=>{
+        getUserFromAsyncStorage().then(res=>setUserData(res))
+    }, [])
 
-    const handleSubmit = () => {
-        // Handle the submission of the form data (e.g., send it to Firebase or an API).
-        // You can add your logic here.
+    console.log("userDATA------->",userData)
+
+    const onDateChange = (event, selectedDate) => {
+        const currentDate = selectedDate || date;
+        setDate(currentDate);
+        setShowDatePicker(false)
+        setShowTimePicker(true)
+
+    };
+
+    const onTimeChange = (selectedTime) => {
+        
+        const { nativeEvent } = selectedTime;
+        const selectTime = nativeEvent.timestamp || time.getTime();
+        setTime(new Date(selectTime));
+        console.log("checkkk", time)
+        setShowDatePicker(false)
+        setShowTimePicker(false)
+    }
+
+    const handleSubmit = async () => {
+
         console.log('Form submitted');
+        let dataToSubmit = {
+            name: fullName,
+            age: age,
+            gender: gender,
+            last_seen_location: lastSeenLocation,
+            description: description,
+            image: selectedImage || '',
+            reported_by: userData?.uid,
+            missing_date: date && time ? date?.toLocaleDateString('en-GB') + ' ' + time?.toLocaleTimeString() : new Date()
+        }
+
+        try {
+            console.log("dataToSubmit--->", dataToSubmit)
+            let resp = await addDataToCollection(collectionNames.missing, dataToSubmit)
+            console.log("DATA ADDED---->", resp)
+
+        } catch (e) {
+            console.log("ERR in data upload----->", e)
+        }
+
+
     };
 
     const onAvatarChange = (image) => {
         console.log(image);
+        selectedImage(image)
         // upload image to server here 
     };
 
@@ -106,9 +160,82 @@ const MissingPersonReportForm = () => {
                     activeOutlineColor={theme.backgroundColor}
 
                 />
+
+                {/* <Text onPress={() => setShowDatePicker(true)} style={{ fontSize: 20, marginBottom: 50, }}  >{`Missing date: ${date.toDateString()}`}</Text> */}
+
+                <TouchableOpacity onPress={() => {
+                    if (showDatePicker || showTimePicker){
+                        setShowDatePicker(false)
+                        setShowTimePicker(false)
+                    }
+                    setShowDatePicker(true)
+                    console.log("HEREEEE", showDatePicker)
+                }} >
+
+                    <TextInput
+                        label="Select Missing date and time"
+                        value={ date && time ? date?.toLocaleDateString('en-GB') + ' ' + time?.toLocaleTimeString() : ""}
+                        editable={false}
+                        activeOutlineColor={theme.backgroundColor}
+                        style={{ marginBottom: 20 }}
+
+                    />
+                </TouchableOpacity>
+
+                {
+                    showDatePicker && !showTimePicker && (
+
+                        <Modal
+                            isVisible={showDatePicker && !showTimePicker}
+                            animationIn="slideInUp"
+                            animationOut="slideOutDown"
+                            style={{ margin: 0 }}
+                            useNativeDriver
+                            onBackdropPress={() => {
+                                setShowDatePicker(false)
+                                setShowTimePicker(false)
+                            }}
+
+                        >
+                            <View style={styles.datePickerContainer}>
+                                <DateTimePicker
+                                    value={date ? date : ''}
+                                    mode="date"
+                                    display="default"
+                                    onChange={onDateChange}
+                                />
+                            </View>
+                        </Modal>
+                    )
+                }
+
+                {!showDatePicker && showTimePicker && (
+
+                    <Modal
+                        isVisible={!showDatePicker && showTimePicker}
+                        animationIn="slideInUp"
+                        animationOut="slideOutDown"
+                        style={{ margin: 0 }}
+                        useNativeDriver
+                        onBackdropPress={() => {
+                            setShowDatePicker(false)
+                            setShowTimePicker(false)
+                        }}
+                    >
+                        <View style={styles.datePickerContainer}>
+                            <DateTimePicker
+                                value={time ? time : ''}
+                                mode="time"
+                                display="default"
+                                onChange={onTimeChange}
+                            />
+                        </View>
+                    </Modal>
+                )}
+
             </ScrollView>
             <View style={styles.buttonContainer} >
-                <CustomButton type="contained" title="Submit" btnColor={theme.backgroundColor} txtColor="#ffffff"
+                <CustomButton type="contained" title="Submit" btnColor={theme.backgroundColor} txtColor="#ffffff" onPress={handleSubmit}
                     style={styles.buttonStyle} />
             </View>
         </View>
@@ -164,7 +291,10 @@ const styles = StyleSheet.create({
     },
     buttonStyle: {
         width: "80%",
-    }
+    },
+    datePickerContainer: {
+        padding: 40,
+    },
 });
 
 export default MissingPersonReportForm;
