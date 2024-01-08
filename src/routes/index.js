@@ -75,9 +75,8 @@ function TabRoutes({ route }) {
     <Tab.Navigator
       tabBar={props => <CustomTabBar {...props} />}
     >
-
-      <Tab.Screen name="missing" component={MissingPeople} />
-      <Tab.Screen name="found" component={FoundPerson} />
+      <Tab.Screen name="missing" component={MissingPeople} options={{ tabBarLabel: 'All missing persons' }} />
+      <Tab.Screen name="found" component={FoundPerson} options={{ tabBarLabel: 'Report missing person' }} />
     </Tab.Navigator>
   );
 }

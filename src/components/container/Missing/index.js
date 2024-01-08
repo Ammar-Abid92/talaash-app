@@ -8,6 +8,7 @@ import { getCollectionData, getToken, requestUserPermission } from '../../../ser
 import { collectionNames } from '../../../services/firebase/collectionsMap';
 import { ActivityIndicator } from 'react-native';
 import useGetCollectionData from '../../../hooks/useGetCollectionData';
+import MissingNonIdeal from './NonIdeal';
 
 const { height, width, fontScale } = Dimensions.get('window');
 
@@ -15,18 +16,19 @@ const { height, width, fontScale } = Dimensions.get('window');
 const MissingPeople = ({ navigation }) => {
 
     const [I18n, changeLanguage] = useContext(LanguageContext)
-    
+
     const [theme, setTheme] = useContext(ThemeContext)
     const [loading, setLoading] = useState(true);
-    
-    const { data } = useGetCollectionData(collectionNames.missing, setLoading)
-    
+    const [nonIdeal, setNonIdeal] = useState(false)
+
+    const { data } = useGetCollectionData(collectionNames.missing, setLoading, setNonIdeal)
+
     useEffect(() => {
         requestUserPermission();
         getToken();
     }, [])
 
-    return (
+    return !loading && !nonIdeal ? (
         <SafeAreaView style={styles.mainContainer} >
 
             <View style={styles.heading} >
@@ -35,20 +37,12 @@ const MissingPeople = ({ navigation }) => {
                 </Text>
             </View>
 
-
-
-            {!loading ? (
-
-                <FlatList
-                    data={data}
-                    renderItem={List}
-                    keyExtractor={(item) => item.id}
-                    style={styles.flatList}
-                />
-            ) : (
-                <ActivityIndicator />
-            )}
-
+            <FlatList
+                data={data}
+                renderItem={List}
+                keyExtractor={(item) => item.id}
+                style={styles.flatList}
+            />
 
             <View style={styles.buttonContainer} >
                 <CustomButton type="contained" title="Want to add a missing person ? " btnColor={theme.backgroundColor} txtColor="#ffffff"
@@ -56,7 +50,18 @@ const MissingPeople = ({ navigation }) => {
                     onPress={() => navigation.navigate('found')}
                 />
             </View>
+
         </SafeAreaView>
+
+    ) : nonIdeal ? (
+
+        <MissingNonIdeal />
+
+    ) : (
+
+        <View style={styles.flatList} >
+            <ActivityIndicator animating={true} color="black" size={50} style={{ paddingHorizontal: 10, flex: 1 }} />
+        </View>
     )
 }
 

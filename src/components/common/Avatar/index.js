@@ -13,8 +13,8 @@ import Modal from 'react-native-modal';
 import Icon from 'react-native-vector-icons/dist/FontAwesome';
 
 
-export const Avatar = ({ source, onChange, avatarWidth, avatarHeight }) => {
-    const [uri, setUri] = React.useState(source?.uri || undefined);
+export const Avatar = ({ source, onChange, avatarWidth, avatarHeight, defaultURI, setUri }) => {
+
     const [visible, setVisible] = React.useState(false);
     const close = () => setVisible(false);
     const open = () => setVisible(true);
@@ -51,7 +51,7 @@ export const Avatar = ({ source, onChange, avatarWidth, avatarHeight }) => {
             <TouchableOpacity onPress={open}>
                 <Image
                     style={{ ...styles.avatar, height: avatarHeight, width: avatarWidth }}
-                    source={uri ? { uri } : source}
+                    source={defaultURI ? { uri: defaultURI } :  source }
                 />
             </TouchableOpacity>
             <Modal

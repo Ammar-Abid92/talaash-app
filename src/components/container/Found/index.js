@@ -3,28 +3,18 @@ import { View, Text, SafeAreaView, StyleSheet } from 'react-native'
 import MissingPersonReportForm from './ReportForm'
 import SignInForm from '../SignIn'
 import { useSelector } from 'react-redux';
-import { getUserFromAsyncStorage } from '../../../services/helper';
+import { removeUserFromAsyncStorage } from '../../../services/helper';
+import useGetUserFromAsync from '../../../hooks/useGetUserFromAsync';
 
 
 const FoundPerson = ({ route, navigation }) => {
-    
-    const user = useSelector(state=>state.user.user)
-    const [userData, setUserData] = useState(null);
+    // removeUserFromAsyncStorage()
+    const [isLoggedIn, setIsLoggedIn] = useState(false)
 
-    console.log("USER in redux----->", user)
+    const user = useSelector(state => state.user.user)
+    const { userData } = useGetUserFromAsync(isLoggedIn);
 
-    useEffect(() => {
-        checkUserFromStorage();
-      }, []);
-
-
-      const checkUserFromStorage = async () => {
-        const storedUser = await getUserFromAsyncStorage();
-        console.log("User in ASYNC---->", storedUser)
-        if (storedUser) {
-            setUserData(storedUser);
-        }
-      };
+    console.log("INSIDE---->", userData)
 
     return userData?.uid ? (
         <View style={styles.mainContainer} >
@@ -32,14 +22,14 @@ const FoundPerson = ({ route, navigation }) => {
         </View>
     ) : (
         <View style={styles.mainContainer} >
-            <SignInForm />
+            <SignInForm  setIsLoggedIn={setIsLoggedIn} isLoggedIn={isLoggedIn} />
         </View>
     )
 }
 
 const styles = StyleSheet.create({
     mainContainer: {
-        flex:1
+        flex: 1
     }
 })
 

@@ -18,15 +18,14 @@ const App = () => {
   return (
 
     <Provider store={store}>
-    <ThemeProvider>
-      <LanguageProvider>
-        {/* below is the props that is being passed to the language provider */}
-        <Routes />
-      </LanguageProvider>
-    </ThemeProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          <Routes />
+        </LanguageProvider>
+      </ThemeProvider>
     </Provider>
 
   )
 }
 
-export default App
+export default App  

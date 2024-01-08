@@ -1,9 +1,19 @@
 import { View, Text } from 'react-native'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Snackbar } from 'react-native-paper';
 
 
-const CustomToast = ({isVisible, onDismiss, action, actionLabel, title, type}) => {
+const CustomToast = ({isVisible, onDismiss, action, actionLabel, title, type, setIsVisible}) => {
+
+    useEffect(() => {
+
+        const timeoutId = setTimeout(() => {
+          setIsVisible(false)
+        }, 2000);
+    
+        // Cleanup the timeout to avoid memory leaks
+        return () => clearTimeout(timeoutId);
+      }, []); 
 
     return (
         <View style={{position: 'relative', bottom:80 }}  >

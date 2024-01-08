@@ -1,6 +1,8 @@
 import auth from "@react-native-firebase/auth"
 import messaging from '@react-native-firebase/messaging';
 import { getFirestore, collection, addDoc } from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
+
 
 export const signUpService = (email, password) => {
 
@@ -64,4 +66,22 @@ export const addDataToCollection = async (collectionName, data) => {
     console.log('Document written ', docRef);
     return docRef;
   
-  }
+}
+
+
+export const uploadImage = async (imageName, path) => {
+    
+    try{
+        const storageRef = storage().ref(`images/${imageName}`);
+        const response = await fetch(path);
+        const imageBlob = await response.blob();
+        await storageRef.put(imageBlob);
+        const downloadURL = await storageRef.getDownloadURL();
+        console.log("URL----->", downloadURL)
+        return downloadURL;
+    } catch (e) {
+        console.log("ERRORRR----->", e)
+    }
+
+}
+

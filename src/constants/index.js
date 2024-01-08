@@ -41,3 +41,5 @@ export var themeStyleSheet = {
     darkVoilet: '#805CF4',
     extraBrightBrown: 'rgba(238, 231, 221, 0.5)'
 };
+
+export const USER_KEY = 'loggedInUser';

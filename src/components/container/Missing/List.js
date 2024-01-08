@@ -8,7 +8,11 @@ const List = ({ item }) => {
 
     return (
         <View style={styles.userContainer}>
-            <Image source={{uri: item.image}} style={styles.profileImage} />
+            {
+               item.image != null ? (
+                    <Image source={{ uri: item?.image }} style={styles.profileImage} />
+                ) : null
+            }
             <View style={styles.userInfo}>
                 <Text style={styles.userName}>{item.name}</Text>
                 <Text style={styles.joinDate}>Missed on {item.missing_date}</Text>
@@ -19,12 +23,12 @@ const List = ({ item }) => {
 
 
 const styles = StyleSheet.create({
-    
+
     userContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 4,
-        marginTop:8,
+        marginTop: 8,
 
     },
     profileImage: {

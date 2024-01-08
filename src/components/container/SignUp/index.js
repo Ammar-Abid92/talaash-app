@@ -21,6 +21,8 @@ const SignUpForm = ({ navigation }) => {
     const dispatch = useDispatch()
     const [I18n, changeLanguage] = useContext(LanguageContext)
     const [theme, setTheme] = useContext(ThemeContext)
+    
+    const [uri, setUri] = useState(undefined);
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -117,6 +119,8 @@ const SignUpForm = ({ navigation }) => {
                         source={require('../../../assets/images/absent-user.jpg')}
                         avatarWidth={100}
                         avatarHeight={100}
+                        defaultURI={uri}
+                        setUri={setUri}
                     />
                 </View>
 

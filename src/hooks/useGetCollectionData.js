@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import firestore from '@react-native-firebase/firestore';
 
-const useGetCollectionData = (collectionName, setLoading) => {
+const useGetCollectionData = (collectionName, setLoading, setNonIdeal) => {
 
     const [data, setData] = useState([])
 
@@ -19,6 +19,7 @@ const useGetCollectionData = (collectionName, setLoading) => {
             setLoading(false)
         }, (error => {
             console.log("ERROR FETCHING COLLECTION----->", error)
+            setNonIdeal(true)
         }));
     }, [collectionName])
 

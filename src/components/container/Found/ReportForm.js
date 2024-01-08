@@ -7,11 +7,13 @@ import CustomButton from '../../common/Button';
 import * as ImagePicker from 'react-native-image-picker';
 import { Avatar } from '../../common/Avatar';
 import { collectionNames } from '../../../services/firebase/collectionsMap';
-import { getUserFromAsyncStorage } from '../../../services/helper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { TextInput, HelperText, Portal, RadioButton } from 'react-native-paper';
 import Modal from "react-native-modal";
-import { addDataToCollection } from '../../../services/firebase';
+import { addDataToCollection, uploadImage } from '../../../services/firebase';
+import useGetUserFromAsync from '../../../hooks/useGetUserFromAsync';
+import CustomToast from '../../common/Toast';
+import { useNavigation } from '@react-navigation/native';
 
 
 const { height, width, fontScale } = Dimensions.get('window');
@@ -19,25 +21,32 @@ const { height, width, fontScale } = Dimensions.get('window');
 
 const MissingPersonReportForm = () => {
 
+    const navigation = useNavigation();
+
+
     const [I18n, changeLanguage] = useContext(LanguageContext)
     const [theme, setTheme] = useContext(ThemeContext)
+
     const [fullName, setFullName] = useState('');
     const [age, setAge] = useState('');
     const [gender, setGender] = useState('male');
     const [lastSeenLocation, setLastSeenLocation] = useState('');
     const [description, setDescription] = useState('');
-    const [selectedImage, setSelectedImage] = useState(null);
+    const [selectedImageURL, setSelectedImageURL] = useState(null);
     const [date, setDate] = useState(new Date());
     const [time, setTime] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
-    const [showTimePicker, setShowTimePicker] = useState(false)
-    const [userData, setUserData] = useState({})
+    const [showTimePicker, setShowTimePicker] = useState(false);
+    const [uri, setUri] = useState(undefined);
 
-    useEffect(()=>{
-        getUserFromAsyncStorage().then(res=>setUserData(res))
-    }, [])
 
-    console.log("userDATA------->",userData)
+    const [isVisible, setIsVisible] = useState(false)
+    const [toastTitle, setToastTitle] = useState('')
+    const [toastType, setToastType] = useState('')
+    const [loading, setLoading] = useState(false)
+
+
+    const { userData } = useGetUserFromAsync();
 
     const onDateChange = (event, selectedDate) => {
         const currentDate = selectedDate || date;
@@ -48,7 +57,7 @@ const MissingPersonReportForm = () => {
     };
 
     const onTimeChange = (selectedTime) => {
-        
+
         const { nativeEvent } = selectedTime;
         const selectTime = nativeEvent.timestamp || time.getTime();
         setTime(new Date(selectTime));
@@ -57,7 +66,24 @@ const MissingPersonReportForm = () => {
         setShowTimePicker(false)
     }
 
+    const emptyState = () => {
+        setFullName('')
+        setAge('')
+        setGender('')
+        setDescription('')
+        setLastSeenLocation('')
+        setSelectedImageURL(null)
+        setDate(new Date())
+        setTime(new Date())
+        setUri(undefined)
+
+    }
+
+    console.log("LOADING--->", loading)
+
     const handleSubmit = async () => {
+
+        setLoading(true)
 
         console.log('Form submitted');
         let dataToSubmit = {
@@ -66,27 +92,42 @@ const MissingPersonReportForm = () => {
             gender: gender,
             last_seen_location: lastSeenLocation,
             description: description,
-            image: selectedImage || '',
+            image: selectedImageURL || null,
             reported_by: userData?.uid,
             missing_date: date && time ? date?.toLocaleDateString('en-GB') + ' ' + time?.toLocaleTimeString() : new Date()
         }
 
-        try {
-            console.log("dataToSubmit--->", dataToSubmit)
-            let resp = await addDataToCollection(collectionNames.missing, dataToSubmit)
+        addDataToCollection(collectionNames.missing, dataToSubmit).then(resp => {
+
             console.log("DATA ADDED---->", resp)
+            setIsVisible(true)
+            setToastTitle("Person added successfully")
+            setToastType('success')
+            setLoading(false)
 
-        } catch (e) {
+            setTimeout(() => {
+                emptyState();
+            }, 1000);
+            
+        }).catch(e => {
+
             console.log("ERR in data upload----->", e)
-        }
-
+            setToastTitle(e)
+            setToastType('fail')
+            setLoading(false)
+            setIsLoggedIn(false)
+        })
 
     };
 
-    const onAvatarChange = (image) => {
-        console.log(image);
-        selectedImage(image)
-        // upload image to server here 
+    const onAvatarChange = async (image) => {
+
+        const { path } = image;
+        let name = path.split('/')[path.split('/').length - 1]
+        let URL = await uploadImage(name, path)
+        console.log("URL HERE------>", URL)
+        setSelectedImageURL(URL);
+
     };
 
     return (
@@ -101,6 +142,8 @@ const MissingPersonReportForm = () => {
                         source={require('../../../assets/images/absent-user.jpg')}
                         avatarWidth={200}
                         avatarHeight={200}
+                        defaultURI={uri}
+                        setUri={setUri}
                     />
                 </View>
                 <TextInput
@@ -120,7 +163,6 @@ const MissingPersonReportForm = () => {
                     style={styles.input}
                     activeOutlineColor={theme.backgroundColor}
 
-
                 />
                 <Text style={styles.genderLabel}>Gender:</Text>
                 <View style={styles.radioContainer}>
@@ -134,7 +176,7 @@ const MissingPersonReportForm = () => {
                             <Text>Female</Text>
                         </View>
                         <View style={styles.radioItem}>
-                            <RadioButton value="female" color={theme.backgroundColor} />
+                            <RadioButton value="other" color={theme.backgroundColor} />
                             <Text>Other</Text>
                         </View>
                     </RadioButton.Group>
@@ -146,7 +188,6 @@ const MissingPersonReportForm = () => {
                     style={styles.input}
                     mode="outlined"
                     activeOutlineColor={theme.backgroundColor}
-
 
                 />
                 <TextInput
@@ -161,20 +202,17 @@ const MissingPersonReportForm = () => {
 
                 />
 
-                {/* <Text onPress={() => setShowDatePicker(true)} style={{ fontSize: 20, marginBottom: 50, }}  >{`Missing date: ${date.toDateString()}`}</Text> */}
-
                 <TouchableOpacity onPress={() => {
-                    if (showDatePicker || showTimePicker){
+                    if (showDatePicker || showTimePicker) {
                         setShowDatePicker(false)
                         setShowTimePicker(false)
                     }
                     setShowDatePicker(true)
-                    console.log("HEREEEE", showDatePicker)
                 }} >
 
                     <TextInput
                         label="Select Missing date and time"
-                        value={ date && time ? date?.toLocaleDateString('en-GB') + ' ' + time?.toLocaleTimeString() : ""}
+                        value={date && time ? date?.toLocaleDateString('en-GB') + ' ' + time?.toLocaleTimeString() : ""}
                         editable={false}
                         activeOutlineColor={theme.backgroundColor}
                         style={{ marginBottom: 20 }}
@@ -235,9 +273,28 @@ const MissingPersonReportForm = () => {
 
             </ScrollView>
             <View style={styles.buttonContainer} >
-                <CustomButton type="contained" title="Submit" btnColor={theme.backgroundColor} txtColor="#ffffff" onPress={handleSubmit}
-                    style={styles.buttonStyle} />
+                <CustomButton
+                    type="contained"
+                    title="Submit"
+                    btnColor={theme.backgroundColor}
+                    txtColor="#ffffff"
+                    onPress={handleSubmit}
+                    style={styles.buttonStyle}
+                    loader={true}
+                    disabled={fullName.length && selectedImageURL ? false : true}
+
+                />
             </View>
+
+            {isVisible && (
+                <CustomToast
+                    isVisible={isVisible}
+                    onDismiss={() => { }}
+                    title={toastTitle}
+                    type={toastType}
+                    setIsVisible={setIsVisible}
+                />
+            )}
         </View>
     );
 };
@@ -283,15 +340,19 @@ const styles = StyleSheet.create({
         marginRight: 16,
     },
     buttonContainer: {
-        display: 'flex',
-        width: width * 0.92,
+        flex: 0.1,
+        width: width * 0.91,
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth:1
 
     },
     buttonStyle: {
         width: "80%",
+        justifyContent: 'center',
+        alignItems: 'center',
     },
+
     datePickerContainer: {
         padding: 40,
     },

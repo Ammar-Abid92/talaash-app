@@ -18,7 +18,7 @@ import { saveUserToAsyncStorage } from '../../../services/helper';
 const { height, width, fontScale } = Dimensions.get('window');
 
 
-const SignInForm = () => {
+const SignInForm = ({setIsLoggedIn, isLoggedIn}) => {
     const navigation = useNavigation();
     const dispatch = useDispatch();
 
@@ -31,6 +31,7 @@ const SignInForm = () => {
     const [isVisible, setIsVisible] = useState(false)
     const [toastTitle, setToastTitle] = useState('')
     const [toastType, setToastType] = useState('')
+    const [loading, setLoading] = useState(false)
 
     const [errors, setErrors] = useState({
         email: '',
@@ -54,6 +55,9 @@ const SignInForm = () => {
 
 
     const handleSignIn = () => {
+
+        setLoading(true)
+
         console.log('Sign In pressed', Object.values(errors), errors);
 
         if (!errors.email && !errors.password ) {
@@ -67,12 +71,17 @@ const SignInForm = () => {
                     setIsVisible(true)
                     setToastTitle("Sign in successful")
                     setToastType('success')
+                    setLoading(false)
+                    setIsLoggedIn(true)
                 })
                 .catch(e => {
                     setIsVisible(true)
                     console.log(e)
                     setToastTitle(e)
                     setToastType('fail')
+                    setLoading(false)
+                    setIsLoggedIn(false)
+
                 })
         }
     };
@@ -135,6 +144,7 @@ const SignInForm = () => {
                     style={styles.buttonStyle}
                     onPress={handleSignIn}
                     disabled={!errors.email && !errors.password ? false : true}
+                    loader={false}
                 />
             </View>
 
@@ -144,6 +154,7 @@ const SignInForm = () => {
                     onDismiss={() => {}}
                     title={toastTitle}
                     type={toastType}
+                    setIsVisible={setIsVisible}
                 />
             )}
         </View>
@@ -177,6 +188,8 @@ const styles = StyleSheet.create({
     },
     buttonStyle: {
         width: "80%",
+        justifyContent:'center',
+        alignItems:'center',
     },
     signUpText: {
         marginTop: 20,
