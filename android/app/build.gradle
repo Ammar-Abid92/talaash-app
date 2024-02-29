@@ -1,4 +1,5 @@
 apply plugin: "com.android.application"
+apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
 apply plugin: 'com.google.gms.google-services'
 
 import com.android.build.OutputFile
@@ -81,11 +82,10 @@ import org.apache.tools.ant.taskdefs.condition.Os
  */
 
 project.ext.react = [
-    enableHermes: false,  // clean and rebuild if changing
+    enableHermes: true,  // clean and rebuild if changing
 ]
 
 apply from: "../../node_modules/react-native/react.gradle"
-apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
 
 
 /**
@@ -145,7 +145,6 @@ android {
         versionCode 1
         versionName "1.0"
         buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()
-        multiDexEnabled true // <-- ADD THIS in the defaultConfig section
 
 
         if (isNewArchitectureEnabled()) {
@@ -257,17 +256,14 @@ android {
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
 
-    implementation 'com.android.support:multidex:2.0.1' //enter the latest multidex version
-
-
     //noinspection GradleDynamicVersion
     implementation "com.facebook.react:react-native:+"  // From node_modules  
+
+    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.0.0"
 
     // I am adding below 2 lines for firebase  
     implementation platform('com.google.firebase:firebase-bom:32.3.1')
     implementation 'com.google.firebase:firebase-analytics'
-
-    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.0.0"
 
     debugImplementation("com.facebook.flipper:flipper:${FLIPPER_VERSION}") {
         exclude group:'com.facebook.fbjni'
@@ -314,7 +310,6 @@ task copyDownloadableDepsToLibs(type: Copy) {
     from configurations.implementation
     into 'libs'
 }
-
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
 
 def isNewArchitectureEnabled() {
