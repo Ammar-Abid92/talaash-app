@@ -1,9 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { USER_KEY } from '../../constants';
+import {USER_KEY} from '../../constants';
+import {Share} from 'react-native';
 
-
-
-export const saveUserToAsyncStorage = async (user) => {
+export const saveUserToAsyncStorage = async user => {
   try {
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
   } catch (error) {
@@ -19,3 +18,6 @@ export const removeUserFromAsyncStorage = async () => {
   }
 };
 
+export const shareContent = async content => {
+  await Share.share(content);
+};

@@ -2,6 +2,7 @@
 import {
   Dimensions,
   Image,
+  Linking,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -20,6 +21,8 @@ import {
 import storage from '@react-native-firebase/storage';
 import {getUserDetailsById} from '../../../services/firebase';
 import {themeStyleSheet} from '../../../constants';
+import Icon from 'react-native-vector-icons/dist/FontAwesome';
+import {shareContent} from '../../../services/helper';
 
 const Description = ({navigation, route}) => {
   const [theme, setTheme] = useContext(ThemeContext);
@@ -42,6 +45,27 @@ const Description = ({navigation, route}) => {
   useEffect(() => {
     apiCall();
   }, [route, userId, apiCall]);
+
+  const handleShare = () => {
+    shareContent({
+      title: 'Missing Person Info !!',
+      message: `Posted by: ${adPosterDetails?.name}
+        Contact # : ${adPosterDetails.phone}
+        \n Missing Person Information : 
+        Missing Person name: ${bio?.name}
+        \n
+        Last Seen Location: ${bio?.last_seen_location}
+        \n
+        Missing Date: ${bio?.missing_date}
+        \n----Download Talaash App, find your missing ones ----
+      `,
+    });
+  };
+
+  const handleContact = () => {
+    let phone = adPosterDetails?.phone.replace('0', '+92');
+    Linking.openURL(`tel:${phone}`);
+  };
 
   return (
     <View style={styles.container}>
@@ -112,20 +136,22 @@ const Description = ({navigation, route}) => {
             justifyContent: 'space-between',
             marginHorizontal: 20,
           }}>
-          <Button
-            icon="question"
-            buttonColor="#2196F3"
-            textColor="white"
-            mode="">
-            Found
-          </Button>
+          <TouchableOpacity style={styles.titleContainer}>
+            <Text style={{color: 'white'}}>Found</Text>
+            <Icon name="question" size={26} color="white" onPress={() => {}} />
+          </TouchableOpacity>
 
-          <Button icon="share" buttonColor="#2196F3" textColor="white">
-            Share
-          </Button>
-          <Button icon="message" buttonColor="#2196F3" textColor="white">
-            Contact
-          </Button>
+          <TouchableOpacity style={styles.titleContainer} onPress={handleShare}>
+            <Icon name="share" size={26} color="white" onPress={() => {}} />
+            <Text style={{color: 'white'}}>Share</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.titleContainer}
+            onPress={handleContact}>
+            <Text style={{color: 'white'}}>Contact</Text>
+            <Icon name="phone" size={26} color="white" onPress={() => {}} />
+          </TouchableOpacity>
         </View>
       </Card>
     </View>
@@ -145,5 +171,19 @@ const styles = StyleSheet.create({
     borderRadius: 35,
     borderWidth: 1,
     borderColor: 'blue',
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    justifyContent: 'space-around',
+    backgroundColor: '#2196F3',
+    borderRadius: 10,
+    padding: 5,
+    width: '30%',
+  },
+  iconButtonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

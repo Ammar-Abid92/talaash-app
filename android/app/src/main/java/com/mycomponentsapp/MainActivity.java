@@ -1,20 +1,22 @@
 package com.mycomponentsapp;
 
+import android.os.Bundle; // Add this here
+import org.devio.rn.splashscreen.SplashScreen; // Add this here
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
 import com.facebook.react.ReactRootView;
-// import org.devio.rn.splashscreen.SplashScreen;
 
 public class MainActivity extends ReactActivity {
-  // @Override
-  // protected void onCreate(Bundle savedInstanceState) {
-  // SplashScreen.show(this); // splash here
-  // super.onCreate(savedInstanceState);
-  // }
 
   @Override
   protected String getMainComponentName() {
     return "Talaash";
+  }
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    SplashScreen.show(this); // Add this here
+    super.onCreate(savedInstanceState);
   }
 
   /**

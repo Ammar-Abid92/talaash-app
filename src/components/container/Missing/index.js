@@ -29,13 +29,9 @@ const MissingPeople = ({navigation}) => {
   const [I18n, changeLanguage] = useContext(LanguageContext);
 
   const [theme, setTheme] = useContext(ThemeContext);
-  const [loading, setLoading] = useState(true);
-  const [nonIdeal, setNonIdeal] = useState(false);
 
-  const {data} = useGetCollectionData(
-    collectionNames.missing,
-    setLoading,
-    setNonIdeal
+  const {data, loading, error, nonIdeal} = useGetCollectionData(
+    collectionNames.missing
   );
 
   useEffect(() => {
@@ -43,7 +39,7 @@ const MissingPeople = ({navigation}) => {
     getToken();
   }, []);
 
-  return !loading && !nonIdeal ? (
+  return data.length ? (
     <SafeAreaView style={styles.mainContainer}>
       <View style={styles.heading}>
         <Text style={{...styles.headingContent, color: theme.dark}}>
@@ -69,9 +65,9 @@ const MissingPeople = ({navigation}) => {
         />
       </View>
     </SafeAreaView>
-  ) : nonIdeal ? (
+  ) : nonIdeal || error.length ? (
     <MissingNonIdeal />
-  ) : (
+  ) : loading ? (
     <View style={styles.flatList}>
       <ActivityIndicator
         animating={true}
@@ -80,7 +76,7 @@ const MissingPeople = ({navigation}) => {
         style={{paddingHorizontal: 10, flex: 1}}
       />
     </View>
-  );
+  ) : null;
 };
 
 const styles = StyleSheet.create({
