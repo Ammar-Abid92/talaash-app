@@ -67,6 +67,10 @@ const Description = ({navigation, route}) => {
     Linking.openURL(`tel:${phone}`);
   };
 
+  const handleFound = () => {
+    //
+  };
+
   return (
     <View style={styles.container}>
       <Card style={{flex: 1}}>
