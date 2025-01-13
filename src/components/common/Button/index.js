@@ -14,7 +14,6 @@ const CustomButton = ({
   disabled,
   loader,
 }) => {
-  console.log('LOADERRRRRRRRRRRRR----->', loader);
   return type === 'elevated' ? (
     <Button
       icon={icon ? icon : ''}

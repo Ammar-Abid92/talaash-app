@@ -9,7 +9,7 @@ import {
 import storage from '@react-native-firebase/storage';
 import firestore from '@react-native-firebase/firestore';
 
-export const signUpService = (
+export const signUpService = async (
   email,
   password,
   name,
@@ -19,45 +19,34 @@ export const signUpService = (
   uri,
   phone
 ) => {
-  return new Promise((resolve, reject) => {
-    if (email && password) {
-      auth()
-        .createUserWithEmailAndPassword(email, password)
-        .then(() => {
-          // Save user information to Firestore
-          let {uid} = auth().currentUser;
-          const singleUser = {
-            email,
-            uid,
-            name,
-            address,
-            city,
-            country,
-            uri,
-            phone,
-          };
-          console.log(
-            'AUTH>CURR==',
-            auth().currentUser,
-            'Single User, ==',
-            singleUser
-          );
-          let result = saveUserToFirestore(singleUser);
-          resolve(result);
-        })
-        .then(() => {
-          console.log(
-            'User signed up successfully and user information saved to Firestore'
-          );
-        })
-        .catch(e => {
-          console.log('ERROR IN SIGN UP--->', e);
-          reject(e.code);
-        });
-    } else {
-      reject('Credentials are not provided correctly!');
-    }
-  });
+  if (!email || !password) {
+    throw new Error('Credentials are not provided correctly!');
+  }
+
+  try {
+    // Create a new user with email and password
+    const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+    const { uid } = userCredential.user;
+
+    const singleUser = {
+      email,
+      uid,
+      name: name || 'Name',
+      address: address || 'Address',
+      city: city || 'City',
+      country: country || 'Country',
+      uri: uri || 'https://via.placeholder.com/150',
+      phone: phone || 'phone',
+    };
+
+    await saveUserToFirestore(singleUser);
+
+    console.log('User signed up successfully and information saved to Firestore');
+    return singleUser;
+  } catch (error) {
+    console.log('Error during sign-up:', error);
+    throw new Error(error.code || 'Error during sign-up');
+  }
 };
 
 export const signInService = (email, password) => {
@@ -65,12 +54,31 @@ export const signInService = (email, password) => {
     if (email && password) {
       auth()
         .signInWithEmailAndPassword(email, password)
-        .then(res => {
-          console.log('SIGN In SUCCESSFUL ---->', res);
-          resolve(res);
+        .then(async userCredential => {
+          const { uid } = userCredential.user; // Get the UID of the signed-in user
+          console.log('SIGN IN SUCCESSFUL ---->', uid);
+
+          // Fetch user details from Firestore
+          try {
+            const userDoc = await firestore()
+              .collection('users')
+              .doc(uid)
+              .get();
+
+            if (userDoc.exists) {
+              console.log('USER DATA FROM FIRESTORE ---->', userDoc.data());
+              resolve(userDoc.data());
+            } else {
+              console.error('No such user document in Firestore');
+              reject('No user data found in Firestore');
+            }
+          } catch (firestoreError) {
+            console.error('Error fetching user details from Firestore ---->', firestoreError);
+            reject(firestoreError.message);
+          }
         })
         .catch(e => {
-          console.log('ERROR IN SIGN In--->', e);
+          console.error('ERROR IN SIGN IN ---->', e);
           reject(e.code);
         });
     } else {
@@ -119,21 +127,10 @@ export const uploadImage = async (imageName, path) => {
 // Function to save user information to Firestore
 const saveUserToFirestore = async user => {
   try {
-    const {email, uid, name, address, city, country, uri, phone} = user;
-
-    await firestore().collection('users').doc(uid).set({
-      email,
-      uid,
-      name,
-      address,
-      city,
-      country,
-      uri,
-      phone,
-    });
-
-    console.log('User information saved to Firestore');
-    return await user;
+    const { uid, ...userData } = user;
+    await firestore().collection('users').doc(uid).set(userData);
+    console.log('User information saved to Firestore:', userData);
+    return userData;
   } catch (error) {
     console.error('Error saving user information to Firestore:', error);
     throw error;

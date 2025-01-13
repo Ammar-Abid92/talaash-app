@@ -1,33 +1,30 @@
 /* eslint-disable prettier/prettier */
-import React, {useContext, useEffect, useState} from 'react';
-import {
-  View,
-  ScrollView,
-  Text,
-  Button,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-} from 'react-native';
-import {ThemeContext} from '../../../context/ThemeContext';
-import {LanguageContext} from '../../../context/LanguageContext';
-import CustomButton from '../../common/Button';
-import {Avatar} from '../../common/Avatar';
-import {collectionNames} from '../../../services/firebase/collectionsMap';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import {TextInput, HelperText, Portal, RadioButton} from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
+import React, { useContext, useState } from 'react';
+import {
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
 import Modal from 'react-native-modal';
-import {addDataToCollection, uploadImage} from '../../../services/firebase';
+import { RadioButton, TextInput } from 'react-native-paper';
+import { ThemeContext } from '../../../context/ThemeContext';
 import useGetUserFromAsync from '../../../hooks/useGetUserFromAsync';
+import { addDataToCollection, uploadImage } from '../../../services/firebase';
+import { collectionNames } from '../../../services/firebase/collectionsMap';
+import { Avatar } from '../../common/Avatar';
+import CustomButton from '../../common/Button';
 import CustomToast from '../../common/Toast';
-import {useNavigation} from '@react-navigation/native';
 
 const {height, width, fontScale} = Dimensions.get('window');
 
 const MissingPersonReportForm = () => {
   const navigation = useNavigation();
 
-  const [I18n, changeLanguage] = useContext(LanguageContext);
   const [theme, setTheme] = useContext(ThemeContext);
 
   const [fullName, setFullName] = useState('');
@@ -76,8 +73,6 @@ const MissingPersonReportForm = () => {
     setTime(new Date());
     setUri(undefined);
   };
-
-  console.log('LOADING--->', loading);
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -270,7 +265,7 @@ const MissingPersonReportForm = () => {
           txtColor="#ffffff"
           onPress={handleSubmit}
           style={styles.buttonStyle}
-          //   loader={true}
+          loader={loading}
           disabled={fullName.length && selectedImageURL ? false : true}
         />
       </View>

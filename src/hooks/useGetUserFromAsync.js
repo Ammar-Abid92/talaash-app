@@ -1,23 +1,25 @@
-import React, {useEffect, useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {USER_KEY} from '../constants';
+import { useEffect, useState } from 'react';
+import { USER_KEY } from '../constants';
 
-const useGetUserFromAsync = user => {
+const useGetUserFromAsync = () => {
   const [userData, setUserData] = useState(null);
 
   useEffect(() => {
-    AsyncStorage.getItem(USER_KEY)
-      .then(res => {
+    const fetchUserData = async () => {
+      try {
+        const res = await AsyncStorage.getItem(USER_KEY);
         setUserData(res ? JSON.parse(res) : null);
-        console.log('USER IN ASYN--->', userData, res);
-      })
-      .catch(e => {
+      } catch (error) {
         console.log('Error getting user from storage:', error);
         setUserData(null);
-      });
-  }, [user]);
+      }
+    };
 
-  return {userData};
+    fetchUserData();
+  }, []); // Fetch only once on mount
+
+  return { userData, setUserData };
 };
 
 export default useGetUserFromAsync;

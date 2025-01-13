@@ -1,115 +1,141 @@
 /* eslint-disable prettier/prettier */
-import React, {useContext, useState} from 'react';
-import {View, StyleSheet, ScrollView, Text, Dimensions} from 'react-native';
-import {TextInput, Button} from 'react-native-paper';
+import React, { useContext, useState } from 'react';
+import { View, StyleSheet, ScrollView, Text, Dimensions } from 'react-native';
+import { TextInput } from 'react-native-paper';
 import CustomButton from '../../common/Button';
-import {LanguageContext} from '../../../context/LanguageContext';
-import {ThemeContext} from '../../../context/ThemeContext';
-import {EMAIL_REGEX, PHONE_REGEX} from '../../../constants/utils';
-import {useEffect} from 'react';
-import {Avatar} from '../../common/Avatar';
-import {signUp, signUpService, uploadImage} from '../../../services/firebase';
+import { LanguageContext } from '../../../context/LanguageContext';
+import { ThemeContext } from '../../../context/ThemeContext';
+import { EMAIL_REGEX, PHONE_REGEX } from '../../../constants/utils';
+import { Avatar } from '../../common/Avatar';
+import { signUpService, uploadImage } from '../../../services/firebase';
 import CustomToast from '../../common/Toast';
-import {useDispatch} from 'react-redux';
-import {setUser} from '../../../redux/slice/userSlice';
-import {saveUserToAsyncStorage} from '../../../services/helper';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../../../redux/slice/userSlice';
+import { saveUserToAsyncStorage } from '../../../services/helper';
 
-const {height, width, fontScale} = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-const SignUpForm = ({navigation}) => {
+const SignUpForm = ({ navigation }) => {
   const dispatch = useDispatch();
-  const [I18n, changeLanguage] = useContext(LanguageContext);
-  const [theme, setTheme] = useContext(ThemeContext);
+  const [I18n] = useContext(LanguageContext);
+  const [theme] = useContext(ThemeContext);
+  const [loading, setLoading] = useState(false);
 
-  const [uri, setUri] = useState(undefined);
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [country, setCountry] = useState('');
-  const [city, setCity] = useState('');
-  const [address, setAddress] = useState('');
-  const [phone, setPhone] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [errors, setErrors] = useState({
+  const [form, setForm] = useState({
     email: '',
-    phone: '',
     password: '',
+    confirmPassword: '',
+    name: '',
+    country: '',
+    city: '',
+    address: '',
+    phone: '',
   });
 
+  const [errors, setErrors] = useState({});
+  const [uri, setUri] = useState('');
   const [isVisible, setIsVisible] = useState(false);
   const [toastTitle, setToastTitle] = useState('');
   const [toastType, setToastType] = useState('');
 
-  useEffect(() => {
-    if (password != confirmPassword) {
-      setErrors({
-        ...errors,
-        password: 'Password is not matched',
-      });
-    } else {
-      setErrors({
-        ...errors,
-        password: '',
-      });
+  const validateField = (key, value) => {
+    let error = '';
+    switch (key) {
+      case 'email':
+        if (!EMAIL_REGEX.test(value)) error = 'Invalid email format';
+        break;
+      case 'phone':
+        if (!PHONE_REGEX.test(value)) error = 'Invalid phone number';
+        break;
+      case 'password':
+        if (value.length < 6) error = 'Password must be at least 6 characters';
+        break;
+      case 'confirmPassword':
+        if (value !== form.password) error = 'Passwords do not match';
+        break;
+      default:
+        break;
     }
-  }, [password, confirmPassword]);
+    return error;
+  };
+
+  const handleChange = (key, value) => {
+    const fieldError = validateField(key, value);
+
+    setForm({ ...form, [key]: value });
+    setErrors({ ...errors, [key]: fieldError });
+  };
+
+  const isFormValid = () => {
+    return (
+      form.email &&
+      form.password &&
+      form.confirmPassword &&
+      form.name &&
+      form.country &&
+      form.city &&
+      form.address &&
+      form.phone &&
+      Object.values(errors).every(error => !error)
+    );
+  };
 
   const handleSignUp = () => {
-    console.log('Sign up pressed');
-
-    if (!EMAIL_REGEX.test(email)) {
-      setErrors({
-        ...errors,
-        email: 'Wrong email format',
-      });
-    }
-
-    if (!PHONE_REGEX.test(phone)) {
-      setErrors({
-        ...errors,
-        phone: 'Phone number is wrong',
-      });
-    }
-
-    if (!errors.email && !errors.password && !errors.phone) {
-      signUpService(email, password, name, address, city, country, uri, phone)
-        .then(res => {
-          console.log(res);
-          saveUserToAsyncStorage(res);
-          dispatch(setUser(res));
-          setIsVisible(true);
-          setToastTitle('Sign up successful');
-          setToastType('success');
-          navigation.navigate('found');
-        })
-        .catch(e => {
-          setIsVisible(true);
-          console.log(e);
-          setToastTitle(e);
-          setToastType('fail');
-        });
-    } else {
+    setLoading(true);
+    if (!isFormValid()) {
       setIsVisible(true);
-      setToastTitle('Fill the form correctly');
+      setToastTitle('Fix the highlighted errors');
       setToastType('fail');
+      return;
     }
+
+    signUpService(
+      form.email,
+      form.password,
+      form.name,
+      form.address,
+      form.city,
+      form.country,
+      uri,
+      form.phone
+    )
+      .then(res => {
+        // saveUserToAsyncStorage(res);
+        // dispatch(setUser(res));
+        setIsVisible(true);
+        setToastTitle('Sign up successful');
+        setToastType('success');
+        setLoading(false);
+        setTimeout(() => {
+          navigation.navigate('found');
+        }
+        , 1000);
+
+      })
+      .catch(error => {
+        setIsVisible(true);
+        setToastTitle(error.message);
+        setToastType('fail');
+        setLoading(false);
+        console.log('Error signing up:', error);
+      });
   };
 
   const onAvatarChange = async image => {
-    const {path} = image;
-    let name = path.split('/')[path.split('/').length - 1];
-    let URL = await uploadImage(name, path);
-    console.log('URL HERE------>', URL);
-    setUri(URL);
+    try {
+      const { path } = image;
+      const name = path.split('/').pop();
+      const URL = await uploadImage(name, path);
+      setUri(URL);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+    }
   };
 
   return (
     <View style={styles.mainContainer}>
       <Text style={styles.header}>
-        Register yourself in Talaash App and become a part of people finding
-        chain
+        Register yourself in Talaash App and become a part of people-finding chain
       </Text>
 
       <ScrollView style={styles.container}>
@@ -126,97 +152,87 @@ const SignUpForm = ({navigation}) => {
 
         <TextInput
           label="Full Name"
-          value={name}
-          onChangeText={text => setName(text)}
+          value={form.name}
+          onChangeText={text => handleChange('name', text)}
           mode="outlined"
           style={styles.input}
           activeOutlineColor={theme.backgroundColor}
         />
 
         <TextInput
-          label={errors?.phone ? errors.phone : 'Phone number'}
-          value={phone}
-          onChangeText={text => {
-            setErrors({
-              ...errors,
-              phone: '',
-            });
-            setPhone(text);
-            console.log('Phone Number --->', phone);
-          }}
+          label={errors.phone || 'Phone number'}
+          value={form.phone}
+          onChangeText={text => handleChange('phone', text)}
           mode="outlined"
           keyboardType="number-pad"
           style={styles.input}
           activeOutlineColor={theme.backgroundColor}
           placeholder="03xxxxxxxxx or +923xxxxxxxxx"
           maxLength={13}
-          error={errors.phone}
+          error={!!errors.phone}
         />
+
         <TextInput
-          label={errors?.email ? errors.email : 'Email address'}
-          value={email}
-          onChangeText={text => {
-            setErrors({
-              ...errors,
-              email: '',
-            });
-            setEmail(text);
-          }}
+          label={errors.email || 'Email address'}
+          value={form.email}
+          onChangeText={text => handleChange('email', text)}
           mode="outlined"
           keyboardType="email-address"
           style={styles.input}
           activeOutlineColor={theme.backgroundColor}
-          error={errors.email}
+          error={!!errors.email}
         />
+
         <TextInput
           label="Country"
-          value={country}
-          onChangeText={text => setCountry(text)}
+          value={form.country}
+          onChangeText={text => handleChange('country', text)}
           mode="outlined"
           style={styles.input}
           activeOutlineColor={theme.backgroundColor}
         />
+
         <TextInput
           label="City"
-          value={city}
-          onChangeText={text => setCity(text)}
+          value={form.city}
+          onChangeText={text => handleChange('city', text)}
           mode="outlined"
           style={styles.input}
           activeOutlineColor={theme.backgroundColor}
         />
+
         <TextInput
           label="Address"
-          value={address}
-          onChangeText={text => setAddress(text)}
+          value={form.address}
+          onChangeText={text => handleChange('address', text)}
           mode="outlined"
           style={styles.input}
           activeOutlineColor={theme.backgroundColor}
         />
+
         <TextInput
-          label={errors?.password ? errors.password : 'Your password'}
-          value={password}
-          onChangeText={text => {
-            setPassword(text);
-          }}
+          label={errors.password || 'Password'}
+          value={form.password}
+          onChangeText={text => handleChange('password', text)}
           mode="outlined"
           secureTextEntry
           style={styles.input}
           activeOutlineColor={theme.backgroundColor}
-          error={errors.password}
+          error={!!errors.password}
         />
+
         <TextInput
-          label={errors?.password ? errors.password : 'Confirm your password'}
-          value={confirmPassword}
-          onChangeText={text => {
-            setConfirmPassword(text);
-          }}
+          label={errors.confirmPassword || 'Confirm Password'}
+          value={form.confirmPassword}
+          onChangeText={text => handleChange('confirmPassword', text)}
           mode="outlined"
           secureTextEntry
           style={styles.input}
           activeOutlineColor={theme.backgroundColor}
-          error={errors.password}
+          error={!!errors.confirmPassword}
         />
       </ScrollView>
+
       <View style={styles.buttonContainer}>
         <CustomButton
           type="contained"
@@ -225,9 +241,8 @@ const SignUpForm = ({navigation}) => {
           txtColor="#ffffff"
           style={styles.buttonStyle}
           onPress={handleSignUp}
-          disabled={
-            !errors.email && !errors.password && !errors.phone ? false : true
-          }
+          disabled={!isFormValid()}
+          loader={loading}
         />
       </View>
 
@@ -237,6 +252,7 @@ const SignUpForm = ({navigation}) => {
           onDismiss={() => setIsVisible(false)}
           title={toastTitle}
           type={toastType}
+          setIsVisible={setIsVisible}
         />
       )}
     </View>
@@ -253,10 +269,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 20,
     fontWeight: 'bold',
-    width: 300,
+    textAlign: 'center',
   },
   container: {
-    flex: 0.75,
+    flex: 1,
     marginTop: 20,
   },
   input: {
@@ -264,14 +280,12 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 16,
+    marginVertical: 16,
   },
   buttonContainer: {
-    flex: 0.2,
-    width: width * 0.91,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 16,
   },
   buttonStyle: {
     width: '80%',

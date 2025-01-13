@@ -1,146 +1,111 @@
 /* eslint-disable prettier/prettier */
-import React, {useContext, useState} from 'react';
-import {View, StyleSheet, ScrollView, Text, Dimensions} from 'react-native';
-import {TextInput, Button} from 'react-native-paper';
+import React, { useContext, useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, Text, Dimensions } from 'react-native';
+import { TextInput } from 'react-native-paper';
+import { useDispatch } from 'react-redux';
+import { useNavigation } from '@react-navigation/native';
+import { EMAIL_REGEX } from '../../../constants/utils';
+import { ThemeContext } from '../../../context/ThemeContext';
+import { setUser } from '../../../redux/slice/userSlice';
+import { signInService } from '../../../services/firebase';
+import { saveUserToAsyncStorage } from '../../../services/helper';
 import CustomButton from '../../common/Button';
-import {LanguageContext} from '../../../context/LanguageContext';
-import {ThemeContext} from '../../../context/ThemeContext';
-import {EMAIL_REGEX} from '../../../constants/utils';
-import {useEffect} from 'react';
-import {Avatar} from '../../common/Avatar';
-import {useNavigation} from '@react-navigation/native';
-import {signInService} from '../../../services/firebase';
 import CustomToast from '../../common/Toast';
-import {useDispatch} from 'react-redux';
-import {setUser} from '../../../redux/slice/userSlice';
-import {saveUserToAsyncStorage} from '../../../services/helper';
 
-const {height, width, fontScale} = Dimensions.get('window');
-
-const SignInForm = ({setIsLoggedIn, isLoggedIn}) => {
+const SignInForm = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const [theme] = useContext(ThemeContext);
 
-  const [I18n, changeLanguage] = useContext(LanguageContext);
-  const [theme, setTheme] = useContext(ThemeContext);
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
+  const [form, setForm] = useState({ email: '', password: '' });
+  const [errors, setErrors] = useState({});
   const [isVisible, setIsVisible] = useState(false);
   const [toastTitle, setToastTitle] = useState('');
   const [toastType, setToastType] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const [errors, setErrors] = useState({
-    email: '',
-    password: '',
-  });
-
+  // Real-time Validation
   useEffect(() => {
-    if (email.length && !EMAIL_REGEX.test(email)) {
-      setErrors({
-        ...errors,
-        email: 'email address is formatted wrong',
-      });
-    } else {
-      setErrors({
-        ...errors,
-        email: '',
-      });
+    const newErrors = {};
+    if (form.email && !EMAIL_REGEX.test(form.email)) {
+      newErrors.email = 'Invalid email format';
     }
-  }, [password]);
+    if (form.password && form.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+    setErrors(newErrors);
+  }, [form.email, form.password]);
+
+  const handleInputChange = (key, value) => {
+    setForm({ ...form, [key]: value });
+    setErrors({ ...errors, [key]: '' }); // Clear the error for the field being edited
+  };
 
   const handleSignIn = () => {
     setLoading(true);
 
-    console.log('Sign In pressed', Object.values(errors), errors);
-
-    if (!errors.email && !errors.password) {
-      signInService(email, password)
-        .then(res => {
-          console.log(res);
-          const {
-            displayName,
-            email,
-            emailVerified,
-            phoneNumber,
-            photoURL,
-            uid,
-          } = res.user;
-          saveUserToAsyncStorage(res.user);
-          dispatch(
-            setUser({
-              displayName,
-              email,
-              emailVerified,
-              phoneNumber,
-              photoURL,
-              uid,
-            })
-          );
-          setIsVisible(true);
-          setToastTitle('Sign in successful');
-          setToastType('success');
-          setLoading(false);
-          setIsLoggedIn(true);
-        })
-        .catch(e => {
-          setIsVisible(true);
-          console.log(e);
-          setToastTitle(e);
-          setToastType('fail');
-          setLoading(false);
-          setIsLoggedIn(false);
-        });
+    if (Object.keys(errors).length > 0 || !form.email || !form.password) {
+      setIsVisible(true);
+      setToastTitle('Fix the highlighted errors');
+      setToastType('fail');
+      setLoading(false);
+      return;
     }
+
+    signInService(form.email, form.password)
+      .then(userData => {
+        saveUserToAsyncStorage(userData);
+        dispatch(setUser(userData));
+        setIsVisible(true);
+        setToastTitle('Sign in successful');
+        setToastType('success');
+        setLoading(false);
+        navigation.navigate('account'); // Navigate after successful login
+      })
+      .catch(error => {
+        setIsVisible(true);
+        setToastTitle(error.message || 'Sign in failed');
+        setToastType('fail');
+        setLoading(false);
+      });
   };
 
   return (
     <View style={styles.mainContainer}>
-      <Text style={{...styles.header, color: theme.dark}}>
+      <Text style={{ ...styles.header, color: theme.dark }}>
         You need to login to report the missing person
       </Text>
 
       <ScrollView style={styles.container}>
         <TextInput
-          label={errors?.email ? errors.email : 'Email address'}
-          value={email}
-          onChangeText={text => {
-            setErrors({
-              ...errors,
-              email: '',
-            });
-            setEmail(text);
-          }}
+          label={errors.email || 'Email address'}
+          value={form.email}
+          onChangeText={text => handleInputChange('email', text)}
           mode="outlined"
           keyboardType="email-address"
           style={styles.input}
           activeOutlineColor={theme.backgroundColor}
-          error={errors.email}
+          error={!!errors.email}
         />
 
         <TextInput
-          label={errors?.password ? errors.password : 'Your password'}
-          value={password}
-          onChangeText={text => {
-            setPassword(text);
-          }}
+          label={errors.password || 'Your password'}
+          value={form.password}
+          onChangeText={text => handleInputChange('password', text)}
           mode="outlined"
           secureTextEntry
           style={styles.input}
           activeOutlineColor={theme.backgroundColor}
-          error={errors.password}
+          error={!!errors.password}
         />
 
         <Text
-          style={{...styles.signUpText, color: theme.dark}}
-          onPress={() => {
-            navigation.navigate('authRoutes');
-          }}>
-          New user ? Sign up please
+          style={{ ...styles.signUpText, color: theme.dark }}
+          onPress={() => navigation.navigate('authRoutes')}>
+          New user? Sign up please
         </Text>
       </ScrollView>
+
       <View style={styles.buttonContainer}>
         <CustomButton
           type="contained"
@@ -149,15 +114,15 @@ const SignInForm = ({setIsLoggedIn, isLoggedIn}) => {
           txtColor="#ffffff"
           style={styles.buttonStyle}
           onPress={handleSignIn}
-          disabled={!errors.email && !errors.password ? false : true}
-          loader={false}
+          disabled={Object.keys(errors).length > 0 || !form.email || !form.password || loading}
+          loader={loading}
         />
       </View>
 
       {isVisible && (
         <CustomToast
           isVisible={isVisible}
-          onDismiss={() => {}}
+          onDismiss={() => setIsVisible(false)}
           title={toastTitle}
           type={toastType}
           setIsVisible={setIsVisible}
@@ -177,24 +142,22 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 20,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   container: {
-    flex: 0.75,
+    flex: 1,
     marginTop: 20,
   },
   input: {
     marginBottom: 16,
   },
   buttonContainer: {
-    flex: 0.2,
-    width: width * 0.91,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 16,
   },
   buttonStyle: {
     width: '80%',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   signUpText: {
     marginTop: 20,

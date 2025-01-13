@@ -30,6 +30,7 @@ export const Avatar = ({ source, onChange, avatarWidth, avatarHeight, defaultURI
                 setUri(image.path);
                 onChange?.(image);
             })
+            .catch(e => console.log(e))
             .finally(close);
     };
 
@@ -43,6 +44,7 @@ export const Avatar = ({ source, onChange, avatarWidth, avatarHeight, defaultURI
                 setUri(image.path);
                 onChange?.(image);
             })
+            .catch(e => console.log(e))
             .finally(close);
     };
 

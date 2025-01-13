@@ -1,27 +1,29 @@
-import React, {useEffect, useState} from 'react';
-import {View, Text, SafeAreaView, StyleSheet} from 'react-native';
-import MissingPersonReportForm from './ReportForm';
-import SignInForm from '../SignIn';
-import {useSelector} from 'react-redux';
-import {removeUserFromAsyncStorage} from '../../../services/helper';
+import React, { useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
 import useGetUserFromAsync from '../../../hooks/useGetUserFromAsync';
+import SignInForm from '../SignIn';
+import MissingPersonReportForm from './ReportForm';
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { USER_KEY } from '../../../constants';
 
-const FoundPerson = ({route, navigation}) => {
-  //   removeUserFromAsyncStorage();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+const FoundPerson = () => {
+  const { userData, setUserData } = useGetUserFromAsync();
 
-  const user = useSelector(state => state.user.user);
-  const {userData} = useGetUserFromAsync(user);
+  useFocusEffect(
+    React.useCallback(() => {
+      // Optional: Refresh user data on focus only if user is not already logged in
+      if (!userData) {
+        AsyncStorage.getItem(USER_KEY)
+          .then(res => setUserData(res ? JSON.parse(res) : null))
+          .catch(e => console.log('Error refreshing user data:', e));
+      }
+    }, [userData, setUserData])
+  );
 
-  console.log('INSIDE---->', userData);
-
-  return userData?.uid ? (
+  return (
     <View style={styles.mainContainer}>
-      <MissingPersonReportForm />
-    </View>
-  ) : (
-    <View style={styles.mainContainer}>
-      <SignInForm setIsLoggedIn={setIsLoggedIn} isLoggedIn={isLoggedIn} />
+      {userData?.uid ? <MissingPersonReportForm /> : <SignInForm />}
     </View>
   );
 };

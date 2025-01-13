@@ -1,23 +1,21 @@
 /* eslint-disable prettier/prettier */
-import React from 'react';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import {
-  NavigationContainer,
-  getFocusedRouteNameFromRoute,
+  NavigationContainer
 } from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import SplashScreen from '../components/container/SplashScreen';
-import WelcomeScreen from '../components/container/WelcomeScreen';
-import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
-import MissingPeople from '../components/container/Missing';
-import FoundPerson from '../components/container/Found';
-import {Text, View} from 'react-native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React from 'react';
+import { View } from 'react-native';
 import CustomTabBar from '../components/common/CustomTabBar';
 import CustomHeader from '../components/common/TabBarHeader';
-import SignUpForm from '../components/container/SignUp';
-import SignInForm from '../components/container/SignIn';
 import Account from '../components/container/Account';
 import Description from '../components/container/Description';
+import FoundPerson from '../components/container/Found';
+import MissingPeople from '../components/container/Missing';
 import ProfileScreen from '../components/container/Profile';
+import SignInForm from '../components/container/SignIn';
+import SignUpForm from '../components/container/SignUp';
+import SplashScreen from '../components/container/SplashScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createMaterialTopTabNavigator();
@@ -77,7 +75,14 @@ function MainRoutes() {
       }}>
       <Stack.Screen name="home" component={MyTabsWithHeader} />
       <Stack.Screen name="authRoutes" component={AuthRoutes} />
-      <Stack.Screen name="account" component={Account} />
+      <Stack.Screen name="account" component={Account} options={{
+          headerShown: true,
+          title: 'Account Details',
+          headerStyle: {
+            backgroundColor: '#2196F3',
+          },
+          headerTintColor: 'white',
+        }} />
       <Stack.Screen
         name="description"
         component={Description}
